@@ -1,0 +1,41 @@
+[gd_scene load_steps=4 format=3 uid="uid://door_knocker_scene"]
+
+[ext_resource type="Script" path="res://scripts/entities/ghosts/door_knocker.gd" id="1_knocker"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_knocker"]
+size = Vector2(16, 20)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_detection"]
+radius = 150.0
+
+[node name="DoorKnocker" type="CharacterBody2D" groups=["ghost", "enemy"]]
+collision_layer = 2
+collision_mask = 5
+script = ExtResource("1_knocker")
+knock_interval = 2.0
+knocks_to_enter = 3
+corruption_radius = 100.0
+corruption_damage = 5
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -10)
+modulate = Color(0.3, 0.1, 0.1, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_knocker")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="DetectionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DetectionArea"]
+shape = SubResource("CircleShape2D_detection")
+
+[node name="CorruptionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CorruptionArea"]
+shape = SubResource("CircleShape2D_detection")

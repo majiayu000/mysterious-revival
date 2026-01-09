@@ -1,0 +1,172 @@
+[gd_scene load_steps=2 format=3 uid="uid://hud_scene"]
+
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
+
+[node name="HUD" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_hud")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="TopLeft" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_constants/separation = 8
+
+[node name="HPBar" type="HBoxContainer" parent="MarginContainer/TopLeft"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/TopLeft/HPBar"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
+text = "HP"
+
+[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/TopLeft/HPBar"]
+custom_minimum_size = Vector2(150, 20)
+layout_mode = 2
+value = 100.0
+show_percentage = false
+
+[node name="Value" type="Label" parent="MarginContainer/TopLeft/HPBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "100/100"
+
+[node name="SANBar" type="HBoxContainer" parent="MarginContainer/TopLeft"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/TopLeft/SANBar"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 1, 1)
+text = "SAN"
+
+[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/TopLeft/SANBar"]
+custom_minimum_size = Vector2(150, 20)
+layout_mode = 2
+value = 100.0
+show_percentage = false
+
+[node name="Value" type="Label" parent="MarginContainer/TopLeft/SANBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "100/100"
+
+[node name="GhostSlots" type="HBoxContainer" parent="MarginContainer/TopLeft"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer/TopLeft/GhostSlots"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.3, 0.8, 1)
+text = "驭鬼:"
+
+[node name="Slot1" type="Panel" parent="MarginContainer/TopLeft/GhostSlots"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+
+[node name="Slot2" type="Panel" parent="MarginContainer/TopLeft/GhostSlots"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+
+[node name="TopRight" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+alignment = 2
+
+[node name="ItemSlots" type="HBoxContainer" parent="MarginContainer/TopRight"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 5
+
+[node name="Item1" type="Panel" parent="MarginContainer/TopRight/ItemSlots"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+
+[node name="Key" type="Label" parent="MarginContainer/TopRight/ItemSlots/Item1"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -15.0
+offset_right = 10.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 10
+text = "1"
+horizontal_alignment = 1
+
+[node name="Item2" type="Panel" parent="MarginContainer/TopRight/ItemSlots"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+
+[node name="Key" type="Label" parent="MarginContainer/TopRight/ItemSlots/Item2"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -15.0
+offset_right = 10.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 10
+text = "2"
+horizontal_alignment = 1
+
+[node name="Item3" type="Panel" parent="MarginContainer/TopRight/ItemSlots"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+
+[node name="Key" type="Label" parent="MarginContainer/TopRight/ItemSlots/Item3"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -15.0
+offset_right = 10.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 10
+text = "3"
+horizontal_alignment = 1
+
+[node name="BottomCenter" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+alignment = 2
+
+[node name="NotificationLabel" type="Label" parent="MarginContainer/BottomCenter"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.7, 1)
+theme_override_font_sizes/font_size = 14
+text = ""
+horizontal_alignment = 1
+
+[node name="InteractHint" type="Label" parent="MarginContainer/BottomCenter"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 12
+text = ""
+horizontal_alignment = 1

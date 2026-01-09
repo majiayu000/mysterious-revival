@@ -1,0 +1,74 @@
+[gd_scene load_steps=6 format=3 uid="uid://school_domain_scene"]
+
+[ext_resource type="PackedScene" uid="uid://c1234player5678" path="res://scenes/entities/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://door_knocker_scene" path="res://scenes/entities/ghosts/door_knocker.tscn" id="2_knocker"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1"]
+resource_name = "placeholder_tiles"
+
+[sub_resource type="TileSet" id="TileSet_school"]
+tile_size = Vector2i(16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(16, 16)
+
+[node name="SchoolDomain" type="Node2D"]
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = SubResource("TileSet_school")
+format = 2
+
+[node name="Walls" type="Node2D" parent="."]
+
+[node name="Wall" type="StaticBody2D" parent="Walls"]
+position = Vector2(-200, 0)
+collision_layer = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/Wall"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(1, 30)
+
+[node name="Wall2" type="StaticBody2D" parent="Walls"]
+position = Vector2(200, 0)
+collision_layer = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/Wall2"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(1, 30)
+
+[node name="Wall3" type="StaticBody2D" parent="Walls"]
+position = Vector2(0, -200)
+collision_layer = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/Wall3"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(25, 1)
+
+[node name="Wall4" type="StaticBody2D" parent="Walls"]
+position = Vector2(0, 200)
+collision_layer = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/Wall4"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(25, 1)
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector2(0, 50)
+
+[node name="Ghosts" type="Node2D" parent="."]
+
+[node name="DoorKnocker" parent="Ghosts" instance=ExtResource("2_knocker")]
+position = Vector2(-100, -100)
+
+[node name="Doors" type="Node2D" parent="." groups=["door"]]
+position = Vector2(0, -150)
+
+[node name="CanvasModulate" type="CanvasModulate" parent="."]
+color = Color(0.15, 0.1, 0.2, 1)
+
+[node name="PointLight2D" type="PointLight2D" parent="Player"]
+color = Color(1, 0.9, 0.7, 1)
+energy = 0.8
+texture_scale = 0.5
+
+[node name="DomainController" type="Node" parent="."]

@@ -1,0 +1,42 @@
+# Godot 4+ specific ignores
+.godot/
+
+# Godot-specific ignores
+*.translation
+
+# Imported textures and samples
+.import/
+
+# Mono-specific ignores
+.mono/
+data_*/
+mono_crash.*.json
+
+# Build files
+export/
+exports/
+*.exe
+*.x86_64
+*.x86
+*.apk
+*.aab
+*.pck
+*.dmg
+
+# Editor settings
+.editorconfig
+
+# OS-specific
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Backup files
+*.bak
+*.tmp

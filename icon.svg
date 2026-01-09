@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
+  <rect width="128" height="128" fill="#1a1a2e"/>
+  <circle cx="64" cy="50" r="30" fill="#4a0000" opacity="0.8"/>
+  <circle cx="52" cy="45" r="8" fill="#ff0000"/>
+  <circle cx="76" cy="45" r="8" fill="#ff0000"/>
+  <circle cx="52" cy="45" r="3" fill="#000"/>
+  <circle cx="76" cy="45" r="3" fill="#000"/>
+  <path d="M 50 65 Q 64 80 78 65" stroke="#4a0000" stroke-width="3" fill="none"/>
+  <text x="64" y="105" font-family="Arial" font-size="12" fill="#666" text-anchor="middle">神秘复苏</text>
+</svg>
