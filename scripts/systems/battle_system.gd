@@ -67,6 +67,7 @@ func start_battle(enemies: Array[GhostBase]) -> void:
 		return
 
 	turn_count = 0
+	_reset_combat_speed_modifiers()
 	_calculate_turn_order()
 
 	EventBus.battle_started.emit(player_ghosts, enemy_ghosts)
@@ -109,17 +110,27 @@ func _cleanup_battle() -> void:
 
 
 # ==================== 回合系统 ====================
+func _reset_combat_speed_modifiers() -> void:
+	"""战斗开始时重置实例级速度修正，避免跨场残留"""
+	for unit in player_ghosts:
+		if unit is GhostBase:
+			unit.reset_combat_speed_modifier()
+	for unit in enemy_ghosts:
+		if unit is GhostBase:
+			unit.reset_combat_speed_modifier()
+
+
 func _calculate_turn_order() -> void:
-	"""计算行动顺序（基于速度）"""
+	"""计算行动顺序（基于有效速度）"""
 	turn_order.clear()
 
 	var all_units: Array = []
 	all_units.append_array(player_ghosts)
 	all_units.append_array(enemy_ghosts)
 
-	# 按速度排序
+	# 按有效速度排序（含实例级战斗减速）
 	all_units.sort_custom(func(a, b):
-		return a.ghost_data.speed > b.ghost_data.speed
+		return a.get_effective_speed() > b.get_effective_speed()
 	)
 
 	turn_order = all_units
@@ -135,8 +146,9 @@ func _start_next_turn() -> void:
 	var active_unit = _get_next_active_unit()
 
 	if active_unit == null:
-		# 所有单位都行动过了，开始新回合
+		# 所有单位都行动过了，开始新回合（按当前有效速度重排，使战斗中减速生效）
 		turn_count += 1
+		_calculate_turn_order()
 		current_turn_index = 0
 		_update_rule_context()
 		_start_next_turn()
