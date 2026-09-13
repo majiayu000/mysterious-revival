@@ -18,6 +18,7 @@ enum DoorKnockerState {
 # ==================== 敲门相关 ====================
 @export var knock_interval: float = 2.0  # 敲门间隔
 @export var knocks_to_enter: int = 3  # 敲多少次后进入
+@export var enter_duration: float = 1.0  # 进入房间耗时
 @export var corruption_radius: float = 100.0  # 腐蚀范围
 @export var corruption_damage: int = 5  # 腐蚀伤害/秒
 
@@ -25,6 +26,7 @@ var current_knock_count: int = 0
 var target_door: Node2D = null
 var knocker_state: DoorKnockerState = DoorKnockerState.APPROACHING_DOOR
 var knock_timer: float = 0.0
+var enter_timer: float = 0.0
 var is_knocking: bool = false
 
 # ==================== 腐蚀效果 ====================
@@ -144,6 +146,10 @@ func _perform_knocking(delta: float) -> void:
 		if current_knock_count >= knocks_to_enter:
 			knocker_state = DoorKnockerState.ENTERING
 			is_knocking = false
+			enter_timer = 0.0
+			# Open the door once when entering starts (not every physics frame).
+			if target_door and target_door.has_method("open"):
+				target_door.open()
 
 
 func _knock_once() -> void:
@@ -180,16 +186,15 @@ func _check_rule_discovery() -> void:
 
 # ==================== 进入房间 ====================
 func _enter_room(delta: float) -> void:
-	# 进入动画/效果
-	if target_door and target_door.has_method("open"):
-		target_door.open()
+	# One-shot countdown (same pattern as knock_timer). Do not await here:
+	# this runs every physics frame while knocker_state == ENTERING.
+	enter_timer += delta
 
-	# 进入后开始腐蚀
-	await get_tree().create_timer(1.0).timeout
-	knocker_state = DoorKnockerState.CORRUPTING
-	corruption_effect_active = true
-
-	EventBus.notify("敲门鬼进入了！周围开始腐朽...", "danger")
+	if enter_timer >= enter_duration:
+		enter_timer = 0.0
+		knocker_state = DoorKnockerState.CORRUPTING
+		corruption_effect_active = true
+		EventBus.notify("敲门鬼进入了！周围开始腐朽...", "danger")
 
 
 # ==================== 腐蚀效果 ====================
