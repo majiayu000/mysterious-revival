@@ -45,6 +45,9 @@ var current_patrol_index: int = 0
 # ==================== 战斗相关 ====================
 var cooldown_timers: Dictionary = {}  # 技能冷却计时器
 var combat_speed_modifier: float = 1.0  # 实例级战斗速度修正（不写共享 GhostData）
+var _attack_in_progress: bool = false  # 防止 ATTACK 状态下每帧重入攻击协程
+var _attack_cooldown: float = 0.0
+const ATTACK_COOLDOWN_DURATION: float = 1.0
 
 
 func _ready() -> void:
@@ -163,12 +166,21 @@ func _state_chase(delta: float) -> void:
 
 
 func _state_attack(delta: float) -> void:
-	# 攻击逻辑（由子类实现具体攻击方式）
-	_perform_attack()
+	# One-shot attack + delta cooldown. Do not await here: this runs every
+	# physics frame while current_state stays ATTACK, and await would stack
+	# coroutines (multi-hit + thrashing state transitions).
+	if not _attack_in_progress:
+		_attack_in_progress = true
+		_attack_cooldown = ATTACK_COOLDOWN_DURATION
+		_perform_attack()
+		return
 
-	# 攻击后短暂冷却
-	await get_tree().create_timer(1.0).timeout
+	_attack_cooldown -= delta
+	if _attack_cooldown > 0.0:
+		return
 
+	_attack_in_progress = false
+	_attack_cooldown = 0.0
 	if target != null and is_instance_valid(target):
 		change_state(GhostState.CHASE)
 	else:
@@ -384,8 +396,10 @@ func _enter_state(state: GhostState) -> void:
 
 
 func _exit_state(state: GhostState) -> void:
-	# 退出状态的逻辑，由子类重写
-	pass
+	if state == GhostState.ATTACK:
+		_attack_in_progress = false
+		_attack_cooldown = 0.0
+	# 其他退出逻辑可由子类重写（调用 super 或自行处理）
 
 
 # ==================== 检测回调 ====================
