@@ -295,8 +295,8 @@ func _ability_terrifying_knock(ability_target: Node) -> void:
 		ability_target.take_damage(int(ghost_data.attack * 1.5))
 
 	if ability_target is GhostBase:
-		# 对敌方鬼造成减速效果
-		ability_target.ghost_data.speed = int(ability_target.ghost_data.speed * 0.7)
+		# 对敌方鬼造成减速效果（仅改实例修正，不写共享 GhostData）
+		ability_target.combat_speed_modifier *= 0.7
 
 	EventBus.notify("%s 使用了恐怖敲门！" % ghost_data.display_name, "info")
 

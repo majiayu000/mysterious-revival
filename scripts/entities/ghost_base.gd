@@ -44,6 +44,7 @@ var current_patrol_index: int = 0
 
 # ==================== 战斗相关 ====================
 var cooldown_timers: Dictionary = {}  # 技能冷却计时器
+var combat_speed_modifier: float = 1.0  # 实例级战斗速度修正（不写共享 GhostData）
 
 
 func _ready() -> void:
@@ -60,6 +61,7 @@ func _initialize_from_data() -> void:
 
 	current_hp = ghost_data.max_hp
 	loyalty = ghost_data.base_loyalty if is_controlled else 0.0
+	reset_combat_speed_modifier()
 
 	# 初始化规律上下文
 	rule_context = {
@@ -431,6 +433,17 @@ func get_hp_ratio() -> float:
 	if ghost_data == null:
 		return 1.0
 	return float(current_hp) / float(ghost_data.max_hp)
+
+
+func get_effective_speed() -> float:
+	"""战斗用有效速度 = 模板速度 × 实例级修正，避免改写共享 GhostData"""
+	if ghost_data == null:
+		return 0.0
+	return float(ghost_data.speed) * combat_speed_modifier
+
+
+func reset_combat_speed_modifier() -> void:
+	combat_speed_modifier = 1.0
 
 
 func is_alive() -> bool:
