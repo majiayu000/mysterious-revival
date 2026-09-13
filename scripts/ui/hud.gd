@@ -28,6 +28,11 @@ func _connect_signals() -> void:
 	EventBus.ui_notification_requested.connect(_on_notification_requested)
 	EventBus.ghost_captured.connect(_on_ghost_captured)
 	EventBus.ghost_loyalty_changed.connect(_on_ghost_loyalty_changed)
+	# Refresh slots when a run starts or ends (controlled ghosts cleared).
+	EventBus.domain_entered.connect(_on_domain_entered)
+	EventBus.domain_exited.connect(_on_domain_exited)
+	EventBus.game_over.connect(_on_game_over)
+	EventBus.ghost_escaped.connect(_on_ghost_escaped)
 
 
 func _initialize_ui() -> void:
@@ -93,6 +98,22 @@ func _update_ghost_slots() -> void:
 
 
 func _on_ghost_captured(_ghost: Node) -> void:
+	_update_ghost_slots()
+
+
+func _on_ghost_escaped(_ghost: Node) -> void:
+	_update_ghost_slots()
+
+
+func _on_domain_entered(_domain_type: String) -> void:
+	_update_ghost_slots()
+
+
+func _on_domain_exited() -> void:
+	_update_ghost_slots()
+
+
+func _on_game_over(_is_victory: bool) -> void:
 	_update_ghost_slots()
 
 

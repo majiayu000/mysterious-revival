@@ -25,6 +25,9 @@ func _ready() -> void:
 
 func _connect_signals() -> void:
 	EventBus.ghost_rebelled.connect(_on_ghost_rebelled)
+	# Run reset / end-of-run: despawn live controlled instances and clear slots.
+	EventBus.domain_exited.connect(_on_domain_exited)
+	EventBus.game_over.connect(_on_game_over)
 
 
 func initialize(player: Player) -> void:
@@ -94,10 +97,14 @@ func release_ghost(ghost: GhostBase) -> void:
 		return
 
 	controlled_ghosts.erase(ghost)
-	ghost.release()
+	# Remove ID before release() so ghost_escaped HUD refresh sees the updated slots.
+	var ghost_id := ""
+	if ghost.ghost_data != null:
+		ghost_id = ghost.ghost_data.id
+	if ghost_id != "":
+		GameManager.remove_controlled_ghost(ghost_id)
 
-	# 从GameManager移除
-	GameManager.remove_controlled_ghost(ghost.ghost_data.id)
+	ghost.release()
 
 	ghost_removed.emit(ghost)
 	EventBus.notify("释放了 %s", "info")
@@ -109,6 +116,41 @@ func release_ghost_at_index(index: int) -> void:
 		return
 
 	release_ghost(controlled_ghosts[index])
+
+
+func release_all() -> void:
+	"""释放并清理所有受控鬼实例，与 GameManager 槽位同步（开局/结算）"""
+	# Cancel in-flight battles first so awaiting turn timers cannot touch freed ghosts
+	# or call end_battle() and override GAME_OVER/VICTORY back to IN_DOMAIN.
+	_abort_active_battles()
+
+	var ghosts := controlled_ghosts.duplicate()
+	controlled_ghosts.clear()
+	selected_ghost_index = 0
+	GameManager.player_data.controlled_ghosts.clear()
+
+	for ghost in ghosts:
+		if not is_instance_valid(ghost):
+			continue
+		ghost.release()
+		ghost_removed.emit(ghost)
+		ghost.queue_free()
+
+
+func _abort_active_battles() -> void:
+	if not is_inside_tree():
+		return
+	for node in get_tree().get_nodes_in_group("battle_system"):
+		if node != null and node.has_method("abort_battle"):
+			node.abort_battle()
+
+
+func _on_domain_exited() -> void:
+	release_all()
+
+
+func _on_game_over(_is_victory: bool) -> void:
+	release_all()
 
 
 func _start_capture_cooldown() -> void:
