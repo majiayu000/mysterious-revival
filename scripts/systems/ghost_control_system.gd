@@ -25,6 +25,9 @@ func _ready() -> void:
 
 func _connect_signals() -> void:
 	EventBus.ghost_rebelled.connect(_on_ghost_rebelled)
+	# Run reset / end-of-run: despawn live controlled instances and clear slots.
+	EventBus.domain_exited.connect(_on_domain_exited)
+	EventBus.game_over.connect(_on_game_over)
 
 
 func initialize(player: Player) -> void:
@@ -109,6 +112,29 @@ func release_ghost_at_index(index: int) -> void:
 		return
 
 	release_ghost(controlled_ghosts[index])
+
+
+func release_all() -> void:
+	"""释放并清理所有受控鬼实例，与 GameManager 槽位同步（开局/结算）"""
+	var ghosts := controlled_ghosts.duplicate()
+	controlled_ghosts.clear()
+	selected_ghost_index = 0
+	GameManager.player_data.controlled_ghosts.clear()
+
+	for ghost in ghosts:
+		if not is_instance_valid(ghost):
+			continue
+		ghost.release()
+		ghost_removed.emit(ghost)
+		ghost.queue_free()
+
+
+func _on_domain_exited() -> void:
+	release_all()
+
+
+func _on_game_over(_is_victory: bool) -> void:
+	release_all()
 
 
 func _start_capture_cooldown() -> void:

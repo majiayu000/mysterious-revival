@@ -104,12 +104,15 @@ func _enter_paused() -> void:
 
 func _enter_game_over() -> void:
 	statistics.total_runs += 1
+	# Drop controlled-ghost IDs so a finished run cannot leak into the next.
+	player_data.controlled_ghosts.clear()
 	EventBus.game_over.emit(false)
 
 
 func _enter_victory() -> void:
 	statistics.total_runs += 1
 	statistics.victories += 1
+	player_data.controlled_ghosts.clear()
 	EventBus.game_over.emit(true)
 
 
@@ -183,10 +186,13 @@ func start_domain(domain_type: String, difficulty: int = 1) -> void:
 		"items_collected": 0
 	}
 
-	# 重置玩家状态
+	# 重置玩家状态（含驭鬼槽，避免跨局残留 ID）
 	player_data.current_hp = player_data.max_hp
 	player_data.current_san = player_data.max_san
 	player_data.inventory.clear()
+	player_data.controlled_ghosts.clear()
+	# Always notify systems to drop live controlled instances (even if already IN_DOMAIN).
+	EventBus.domain_exited.emit()
 
 	change_state(GameState.IN_DOMAIN)
 
