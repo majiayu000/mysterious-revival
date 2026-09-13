@@ -306,6 +306,12 @@ func _can_be_captured() -> bool:
 	if ghost_data == null:
 		return false
 
+	# Zero HP is defeat, not capture: require living HP so lethal damage
+	# reaches _die() via _on_defeated, while mid-battle capture still
+	# works for 0 < hp_ratio <= capture_hp_threshold.
+	if current_hp <= 0:
+		return false
+
 	var hp_ratio = float(current_hp) / float(ghost_data.max_hp)
 	return hp_ratio <= ghost_data.capture_hp_threshold
 
