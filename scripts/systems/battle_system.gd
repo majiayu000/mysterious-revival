@@ -31,6 +31,8 @@ var enemy_ghosts: Array[GhostBase] = []
 var turn_order: Array = []  # 行动顺序
 var current_turn_index: int = 0
 var turn_count: int = 0
+## Bumped on start/abort so resumed awaits from a prior battle cannot continue.
+var _battle_generation: int = 0
 
 # ==================== 战斗配置 ====================
 @export var turn_delay: float = 0.5  # 回合间延迟
@@ -56,12 +58,18 @@ func is_battle_active() -> bool:
 	return current_state != BattleState.INACTIVE
 
 
+func _is_battle_generation(generation: int) -> bool:
+	return generation == _battle_generation and current_state != BattleState.INACTIVE
+
+
 ## Stop an in-flight battle without emitting victory/defeat or forcing IN_DOMAIN.
 ## Safe to call when game_over already owns GameManager state.
 func abort_battle() -> void:
 	if current_state == BattleState.INACTIVE:
 		return
 
+	# Invalidate every pending await tied to this battle epoch.
+	_battle_generation += 1
 	current_state = BattleState.INACTIVE
 	player_ghosts.clear()
 	enemy_ghosts.clear()
@@ -76,6 +84,8 @@ func start_battle(enemies: Array[GhostBase]) -> void:
 	if current_state != BattleState.INACTIVE:
 		return
 
+	_battle_generation += 1
+	var generation := _battle_generation
 	current_state = BattleState.STARTING
 	enemy_ghosts = enemies.duplicate()
 	player_ghosts = ghost_control.get_all_controlled_ghosts()
@@ -101,7 +111,7 @@ func start_battle(enemies: Array[GhostBase]) -> void:
 
 	# 开始第一个回合
 	await get_tree().create_timer(0.5).timeout
-	if current_state == BattleState.INACTIVE:
+	if not _is_battle_generation(generation):
 		return
 	_start_next_turn()
 
@@ -111,6 +121,9 @@ func end_battle(is_victory: bool) -> void:
 	if current_state == BattleState.INACTIVE:
 		return
 
+	# Invalidate in-flight turn/action awaits for this battle, then own the end epoch.
+	var ending_generation := _battle_generation
+	_battle_generation += 1
 	current_state = BattleState.VICTORY if is_victory else BattleState.DEFEAT
 
 	if is_victory:
@@ -124,8 +137,8 @@ func end_battle(is_victory: bool) -> void:
 
 	# 清理战斗数据
 	await get_tree().create_timer(1.0).timeout
-	# Abort may have already cleaned up during game_over while we awaited.
-	if current_state == BattleState.INACTIVE:
+	# Abort or a newer battle epoch may have superseded this end_battle await.
+	if _battle_generation != ending_generation + 1:
 		return
 	_cleanup_battle()
 
@@ -198,8 +211,13 @@ func _start_next_turn() -> void:
 		_wait_for_player_input(active_unit)
 	else:
 		# 敌人回合，AI行动
+		var generation := _battle_generation
 		await get_tree().create_timer(turn_delay).timeout
-		if current_state == BattleState.INACTIVE or not is_instance_valid(active_unit):
+		if not _is_battle_generation(generation):
+			return
+		# Freed mid-delay: keep the battle moving instead of stalling ENEMY_TURN.
+		if not is_instance_valid(active_unit):
+			_start_next_turn()
 			return
 		_execute_enemy_turn(active_unit)
 
@@ -249,6 +267,8 @@ func _wait_for_player_input(ghost: GhostBase) -> void:
 	if current_state == BattleState.INACTIVE or not is_instance_valid(ghost):
 		return
 
+	var generation := _battle_generation
+
 	# 这里应该显示战斗UI，让玩家选择行动
 	EventBus.debug("等待玩家指挥 %s" % ghost.ghost_data.display_name)
 
@@ -256,7 +276,10 @@ func _wait_for_player_input(ghost: GhostBase) -> void:
 	# TODO: 实现完整的战斗UI
 	await get_tree().create_timer(0.5).timeout
 
-	if current_state == BattleState.INACTIVE or not is_instance_valid(ghost):
+	if not _is_battle_generation(generation):
+		return
+	if not is_instance_valid(ghost):
+		_start_next_turn()
 		return
 	if enemy_ghosts.is_empty():
 		return
@@ -264,6 +287,7 @@ func _wait_for_player_input(ghost: GhostBase) -> void:
 	# 自动攻击第一个敌人
 	var target = enemy_ghosts[0]
 	if not is_instance_valid(target):
+		_start_next_turn()
 		return
 	execute_attack(ghost, target)
 
@@ -275,6 +299,7 @@ func execute_attack(attacker: GhostBase, target: GhostBase) -> void:
 	if not is_instance_valid(attacker) or not is_instance_valid(target):
 		return
 
+	var generation := _battle_generation
 	current_state = BattleState.EXECUTING
 
 	# 计算伤害
@@ -295,7 +320,7 @@ func execute_attack(attacker: GhostBase, target: GhostBase) -> void:
 		EventBus.notify("%s 可以被捕获了！" % target.ghost_data.display_name, "info")
 
 	await get_tree().create_timer(turn_delay).timeout
-	if current_state == BattleState.INACTIVE:
+	if not _is_battle_generation(generation):
 		return
 	_start_next_turn()
 
@@ -307,6 +332,7 @@ func execute_ability(caster: GhostBase, ability: GhostAbility, target: Node) -> 
 	if not is_instance_valid(caster):
 		return
 
+	var generation := _battle_generation
 	current_state = BattleState.EXECUTING
 
 	# 检查冷却
@@ -332,7 +358,7 @@ func execute_ability(caster: GhostBase, ability: GhostAbility, target: Node) -> 
 	action_executed.emit(caster, "ability:" + ability.id, target)
 
 	await get_tree().create_timer(turn_delay).timeout
-	if current_state == BattleState.INACTIVE:
+	if not _is_battle_generation(generation):
 		return
 	_start_next_turn()
 
@@ -356,7 +382,10 @@ func execute_capture(target: GhostBase) -> void:
 func execute_use_item(item: ItemData, target: Node = null) -> void:
 	"""在战斗中使用道具"""
 	# TODO: 实现道具使用逻辑
+	var generation := _battle_generation
 	await get_tree().create_timer(turn_delay).timeout
+	if not _is_battle_generation(generation):
+		return
 	_start_next_turn()
 
 
