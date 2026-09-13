@@ -338,12 +338,13 @@ func attempt_capture(capture_bonus: float = 0.0) -> bool:
 
 
 func _on_captured() -> void:
+	# Local capture state only. EventBus.ghost_captured is emitted once by
+	# GhostControlSystem._add_ghost after ownership is assigned, so stats/HUD
+	# listeners do not double-fire.
 	is_controlled = true
 	loyalty = ghost_data.base_loyalty
 	current_state = GhostState.CAPTURED
 	target = null
-
-	EventBus.ghost_captured.emit(self)
 
 
 func assign_owner(player: Player) -> void:
