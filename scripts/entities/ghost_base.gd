@@ -268,8 +268,9 @@ func _execute_rule(rule: GhostRule) -> void:
 
 
 # ==================== 战斗接口 ====================
-func take_damage(damage: int, source: Node = null) -> void:
-	var actual_damage = max(1, damage - ghost_data.defense)
+func take_damage(damage: int, source: Node = null, apply_defense: bool = true) -> void:
+	# Battle paths pre-mitigate via BattleSystem / GhostAbility; skip a second defense pass.
+	var actual_damage = max(1, damage - ghost_data.defense) if apply_defense else max(1, damage)
 	current_hp -= actual_damage
 
 	EventBus.damage_dealt.emit(source, self, actual_damage)
