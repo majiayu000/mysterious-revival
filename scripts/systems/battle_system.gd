@@ -231,9 +231,9 @@ func execute_attack(attacker: GhostBase, target: GhostBase) -> void:
 
 	current_state = BattleState.EXECUTING
 
-	# 计算伤害
+	# 计算伤害（已含防御减免，勿在 take_damage 中再次扣防）
 	var damage = _calculate_damage(attacker, target)
-	target.take_damage(damage, attacker)
+	target.take_damage(damage, attacker, false)
 
 	EventBus.debug("%s 攻击 %s 造成 %d 伤害" % [
 		attacker.ghost_data.display_name,
@@ -422,7 +422,8 @@ func _execute_attack_ability(caster: GhostBase, ability: GhostAbility, target: N
 		EventBus.debug("技能未命中")
 		return
 
-	target.take_damage(damage, caster)
+	# Ability damage already applies defense in GhostAbility.calculate_damage
+	target.take_damage(damage, caster, false)
 
 	# 状态效果
 	if ability.roll_status_effect():
