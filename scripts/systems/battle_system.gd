@@ -37,12 +37,37 @@ var turn_count: int = 0
 
 
 func _ready() -> void:
-	pass
+	add_to_group("battle_system")
+	# Abort before run-reset handlers free controlled ghosts (game_over / domain exit).
+	EventBus.game_over.connect(_on_run_reset)
+	EventBus.domain_exited.connect(_on_run_reset)
 
 
 func initialize(p_ghost_control: GhostControlSystem, p_player: Player) -> void:
 	ghost_control = p_ghost_control
 	player = p_player
+
+
+func _on_run_reset(_arg = null) -> void:
+	abort_battle()
+
+
+func is_battle_active() -> bool:
+	return current_state != BattleState.INACTIVE
+
+
+## Stop an in-flight battle without emitting victory/defeat or forcing IN_DOMAIN.
+## Safe to call when game_over already owns GameManager state.
+func abort_battle() -> void:
+	if current_state == BattleState.INACTIVE:
+		return
+
+	current_state = BattleState.INACTIVE
+	player_ghosts.clear()
+	enemy_ghosts.clear()
+	turn_order.clear()
+	current_turn_index = 0
+	turn_count = 0
 
 
 # ==================== 战斗流程 ====================
@@ -76,11 +101,16 @@ func start_battle(enemies: Array[GhostBase]) -> void:
 
 	# 开始第一个回合
 	await get_tree().create_timer(0.5).timeout
+	if current_state == BattleState.INACTIVE:
+		return
 	_start_next_turn()
 
 
 func end_battle(is_victory: bool) -> void:
 	"""结束战斗"""
+	if current_state == BattleState.INACTIVE:
+		return
+
 	current_state = BattleState.VICTORY if is_victory else BattleState.DEFEAT
 
 	if is_victory:
@@ -94,7 +124,18 @@ func end_battle(is_victory: bool) -> void:
 
 	# 清理战斗数据
 	await get_tree().create_timer(1.0).timeout
+	# Abort may have already cleaned up during game_over while we awaited.
+	if current_state == BattleState.INACTIVE:
+		return
 	_cleanup_battle()
+
+	# Never override terminal run states (GAME_OVER / VICTORY) back to IN_DOMAIN.
+	if GameManager.current_state in [
+		GameManager.GameState.GAME_OVER,
+		GameManager.GameState.VICTORY,
+		GameManager.GameState.MAIN_MENU,
+	]:
+		return
 
 	GameManager.change_state(GameManager.GameState.IN_DOMAIN)
 
@@ -127,6 +168,9 @@ func _calculate_turn_order() -> void:
 
 func _start_next_turn() -> void:
 	"""开始下一个回合"""
+	if current_state == BattleState.INACTIVE:
+		return
+
 	# 检查战斗结束条件
 	if _check_battle_end():
 		return
@@ -155,6 +199,8 @@ func _start_next_turn() -> void:
 	else:
 		# 敌人回合，AI行动
 		await get_tree().create_timer(turn_delay).timeout
+		if current_state == BattleState.INACTIVE or not is_instance_valid(active_unit):
+			return
 		_execute_enemy_turn(active_unit)
 
 
@@ -172,6 +218,9 @@ func _get_next_active_unit() -> GhostBase:
 
 func _check_battle_end() -> bool:
 	"""检查战斗是否结束"""
+	if current_state == BattleState.INACTIVE:
+		return true
+
 	# 移除已死亡的单位
 	player_ghosts = player_ghosts.filter(func(g): return is_instance_valid(g) and g.is_alive())
 	enemy_ghosts = enemy_ghosts.filter(func(g): return is_instance_valid(g) and g.is_alive())
@@ -197,6 +246,9 @@ func _update_rule_context() -> void:
 # ==================== 玩家行动 ====================
 func _wait_for_player_input(ghost: GhostBase) -> void:
 	"""等待玩家输入"""
+	if current_state == BattleState.INACTIVE or not is_instance_valid(ghost):
+		return
+
 	# 这里应该显示战斗UI，让玩家选择行动
 	EventBus.debug("等待玩家指挥 %s" % ghost.ghost_data.display_name)
 
@@ -204,17 +256,23 @@ func _wait_for_player_input(ghost: GhostBase) -> void:
 	# TODO: 实现完整的战斗UI
 	await get_tree().create_timer(0.5).timeout
 
+	if current_state == BattleState.INACTIVE or not is_instance_valid(ghost):
+		return
 	if enemy_ghosts.is_empty():
 		return
 
 	# 自动攻击第一个敌人
 	var target = enemy_ghosts[0]
+	if not is_instance_valid(target):
+		return
 	execute_attack(ghost, target)
 
 
 func execute_attack(attacker: GhostBase, target: GhostBase) -> void:
 	"""执行攻击"""
-	if current_state == BattleState.EXECUTING:
+	if current_state == BattleState.INACTIVE or current_state == BattleState.EXECUTING:
+		return
+	if not is_instance_valid(attacker) or not is_instance_valid(target):
 		return
 
 	current_state = BattleState.EXECUTING
@@ -237,12 +295,16 @@ func execute_attack(attacker: GhostBase, target: GhostBase) -> void:
 		EventBus.notify("%s 可以被捕获了！" % target.ghost_data.display_name, "info")
 
 	await get_tree().create_timer(turn_delay).timeout
+	if current_state == BattleState.INACTIVE:
+		return
 	_start_next_turn()
 
 
 func execute_ability(caster: GhostBase, ability: GhostAbility, target: Node) -> void:
 	"""执行技能"""
-	if current_state == BattleState.EXECUTING:
+	if current_state == BattleState.INACTIVE or current_state == BattleState.EXECUTING:
+		return
+	if not is_instance_valid(caster):
 		return
 
 	current_state = BattleState.EXECUTING
@@ -270,6 +332,8 @@ func execute_ability(caster: GhostBase, ability: GhostAbility, target: Node) -> 
 	action_executed.emit(caster, "ability:" + ability.id, target)
 
 	await get_tree().create_timer(turn_delay).timeout
+	if current_state == BattleState.INACTIVE:
+		return
 	_start_next_turn()
 
 
