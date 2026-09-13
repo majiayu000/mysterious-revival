@@ -146,8 +146,9 @@ func _start_next_turn() -> void:
 	var active_unit = _get_next_active_unit()
 
 	if active_unit == null:
-		# 所有单位都行动过了，开始新回合
+		# 所有单位都行动过了，开始新回合（按当前有效速度重排，使战斗中减速生效）
 		turn_count += 1
+		_calculate_turn_order()
 		current_turn_index = 0
 		_update_rule_context()
 		_start_next_turn()
