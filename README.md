@@ -1,7 +1,17 @@
 # 神秘复苏：鬼域求生
 ## Mysterious Revival: Ghost Domain Survival
 
-基于小说《神秘复苏》的 Roguelike 驭鬼战斗游戏。
+基于小说《神秘复苏》的 Godot 4.5 / GDScript Roguelike 驭鬼战斗学习项目，围绕鬼的行为规律、捕获与回合制战斗展开，仍有待开发功能。
+
+[快速开始](#快速开始) · [游戏设计](docs/GAME_DESIGN.md) · [开发指南](docs/DEVELOPMENT_GUIDE.md)
+
+## 快速开始
+
+1. 克隆本仓库，安装 Godot 4.5（项目配置使用 Forward Plus 渲染器）。
+2. 在 Godot 项目管理器中导入根目录的 `project.godot`。
+3. 在编辑器中按 `F5` 运行配置的主场景 `scenes/main/main_menu.tscn`。
+
+项目尚未提供公开在线试玩；源码运行需要 Godot 编辑器。
 
 ## 游戏特色
 
