@@ -13,6 +13,22 @@
 
 项目尚未提供公开在线试玩；源码运行需要 Godot 编辑器。
 
+## 项目定位与第一次运行
+
+这是 Godot / GDScript 学习原型。同名商业手游曾有 [TapTap 官方首发公告](https://www.taptap.cn/moment/464017863213060067)；该历史公告不代表当前下载或运营状态，本仓库也不提供手游账号、礼包码或安装包。
+
+按快速开始导入后，从主菜单点击「开始游戏」，当前 [菜单脚本](scripts/ui/main_menu.gd) 会进入学校鬼域第一层。设置按钮目前只显示「设置功能开发中...」，没有设置界面。设计文档描述的是设计目标，完成情况请结合下面的待开发清单和源码查看。
+
+## 从一个系统开始阅读
+
+| 想学习的任务 | 阅读路径 | 建议观察 |
+|---|---|---|
+| 场景启动与事件传递 | [主菜单](scripts/ui/main_menu.gd) → [状态管理](scripts/autoload/game_manager.gd) → [事件总线](scripts/autoload/event_bus.gd) | 开始按钮怎样切换鬼域和场景 |
+| 移动和交互 | [玩家](scripts/entities/player.gd) | 输入怎样触发移动、交互和背包请求；发出请求不等于完整 UI 已实现 |
+| 捕获与鬼的行为 | [驭鬼系统](scripts/systems/ghost_control_system.gd) → [鬼基类](scripts/entities/ghost_base.gd) → [敲门鬼](scripts/entities/ghosts/door_knocker.gd) | 捕获条件、忠诚度和单个鬼的行为规律 |
+
+先读 [游戏设计](docs/GAME_DESIGN.md) 理解鬼域与规律，再用 [开发指南](docs/DEVELOPMENT_GUIDE.md) 找类与扩展点。项目许可声明为「仅供学习使用」，仓库尚未附通用开源许可证文件。
+
 ## 游戏特色
 
 - **驭鬼系统**：捕获鬼、培养忠诚度、指挥战斗
@@ -93,7 +109,7 @@ mysterious_revival/
 
 - **WASD/方向键**：移动
 - **E**：交互
-- **I**：打开背包
+- **I**：发出背包切换请求（完整背包 UI 仍需结合当前实现确认）
 - **ESC**：暂停
 
 ## 已实现的鬼
@@ -132,3 +148,7 @@ mysterious_revival/
 ## 许可
 
 仅供学习使用
+
+## 问题反馈与更新
+
+遇到问题时，请在 [Issues](https://github.com/majiayu000/mysterious-revival/issues) 写明浏览器或编辑器版本、所用提交、复现步骤和报错文字。当前源码变化见 [提交记录](https://github.com/majiayu000/mysterious-revival/commits/main/)。
